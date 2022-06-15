@@ -1,0 +1,45 @@
+# Maintainer: Ya Code <yacode.dev@gmail.com>
+
+pkgname=firmware-xiaomi-perseus
+pkgver=3
+pkgrel=0
+pkgdesc="Firmware for Mi Mix 3"
+url="https://gitlab.com/pmos-perseus/firmware-xiaomi-perseus"
+arch="aarch64"
+depends="soc-qcom-sdm845-nonfree-firmware linux-firmware-qcom linux-firmware-ath10k"
+license="proprietary"
+options="!check !strip !archcheck"
+
+_version="12e00be6df5e3add875d99b01cf5d0a0d9aab921"
+
+source="$pkgname.tar.gz::$url/-/archive/$_version/$pkgname-$_version.tar.gz
+	firmware.files
+	30-gpu-firmware.files"
+subpackages="
+	$pkgname-initramfs:firmware_initramfs"
+
+package() {
+	cd "$srcdir/$pkgname-$_version/"
+	while IFS="" read -r _i || [ -n "$_i" ]; do
+		[ ! -d $(dirname $_i) ] && mkdir -p $(dirname $_i)
+		echo $_i
+		install -Dm644 $_i "$pkgdir/$_i"
+	done < "$srcdir/firmware.files"
+}
+
+firmware_initramfs() {
+	pkgdesc="Files to be included in the initramfs to support osk-sdl"
+	depends="$pkgname"
+	install_if="$pkgname-nonfree-firmware"
+	mkdir "$subpkgdir"
+
+	install -Dm644 "$srcdir/30-gpu-firmware.files" \
+		"$subpkgdir/etc/postmarketos-mkinitfs/files/30-gpu-firmware.files"
+}
+
+
+sha512sums="
+19399e54e95fcfb5e93a0c71580ae3b5e4c42484a009c9d1a0d56d6bde7f2cc092508d74247f9a6afe47dfb54c1835127516ab515d6d3299cc63f5d3192d1fa5  firmware-xiaomi-perseus.tar.gz
+9ac0918859a974c868487f2709a323d32a00cb4102256d827088bffdd7404f8690d692dabb35c3e796cf9b27b97aff120a3e637a4ca8063f7b09ba19f5383369  firmware.files
+b118c3f39cbb8625bfce227f547bfbbb1b0a4bf4485a69f51f7b4f0a03d1d79524654325536ce4234513ab958978ddf10d97cada4fd1aa18d6c55e943a47b3f0  30-gpu-firmware.files
+"
